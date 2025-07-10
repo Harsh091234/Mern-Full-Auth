@@ -72,3 +72,23 @@ npm start
 cd client
 npm run dev
 
+---
+
+## 🔒 Environment Variables
+
+###  Server (`/server/.env`)
+
+Create a `.env` file inside the `server` folder with the following variables:
+
+MONGO_URI=your_mongodb_connection_string
+PORT=3000
+NODE_ENV=development
+JWT_SECRET=your_jwt_secret_key
+APP_PASSWORD=your_email_app_password
+CLIENT_URL=http://localhost:5173
+
+###  Server (`/client/.env`)
+
+Create a `.env` file inside the `client` folder with the following variables:
+
+VITE_API_URL=http://localhost:3000/api

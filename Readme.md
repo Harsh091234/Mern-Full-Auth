@@ -6,8 +6,6 @@ A complete **Authentication System** built with the **MERN Stack (MongoDB, Expre
 
 ## 🌐 Live Demo : [Click Here](https://your-deployment-url.com)
 
-> Replace with your actual deployed link (e.g., Vercel, Render, Netlify)
-
 ---
 
 ## ✨ Features
@@ -36,8 +34,6 @@ A complete **Authentication System** built with the **MERN Stack (MongoDB, Expre
 ---
 
 ## 📸 Screenshots
-
-> Place your actual images in `client/public/images/`
 
 ![](client/public/images/1.png)  
 ![](client/public/images/2.png)  

@@ -46,6 +46,7 @@ A complete **Authentication System** built with the **MERN Stack (MongoDB, Expre
 
 ![](client/public/images/5.png)
 
+---
 
 ## ⚙️ Installation & Setup
 
@@ -76,7 +77,7 @@ npm run dev
 
 ## 🔒 Environment Variables
 
-###  Server (`/server/.env`)
+#  Server (`/server/.env`)
 
 Create a `.env` file inside the `server` folder with the following variables:
 
@@ -87,7 +88,7 @@ JWT_SECRET=your_jwt_secret_key
 APP_PASSWORD=your_email_app_password
 CLIENT_URL=http://localhost:5173
 
-###  Server (`/client/.env`)
+#  Server (`/client/.env`)
 
 Create a `.env` file inside the `client` folder with the following variables:
 

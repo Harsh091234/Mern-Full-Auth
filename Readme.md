@@ -4,7 +4,7 @@ A complete **Authentication System** built with the **MERN Stack (MongoDB, Expre
 
 ---
 
-## 🌐 Live Demo : [Click Here](https://your-deployment-url.com)
+## 🌐 Live Demo : [Click Here](https://mern-full-auth.vercel.app)
 
 ---
 
@@ -15,8 +15,7 @@ A complete **Authentication System** built with the **MERN Stack (MongoDB, Expre
 - 🚪 **Logout** – Instantly log out from the system  
 - ❓ **Forgot Password** – Request password reset via email  
 - 🔁 **Reset Password** – Securely update your password using token-based link  
-- 🧠 **Session Management** – HTTP-only cookie for enhanced security  
-- 📱 **Responsive Design** – Works smoothly on mobile, tablet, and desktop  
+- 🧠 **Session Management** – HTTP-only cookie for enhanced security   
 
 ---
 

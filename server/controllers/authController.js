@@ -3,11 +3,14 @@ import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 
 import { User } from "../models/User.js";
-import {generateTokenAndSetCookie} from "../utils/generateTokenAndSetCookie.js"
+import {generateAccessTokenAndSetCookie, generateRefreshTokenAndSetCookie} from "../utils/generateTokenAndSetCookie.js"
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mailtrap/emails.js";
+import { RefreshToken } from "../models/RefreshToken.js";
+
+
 
 export const signup = async(req, res) => {
-    const {name, email, password} = req.body;
+    const {name, email, password, deviceId} = req.body;
     try {
         if(!name || !password || !email) {
             throw new Error("all fields are required");
@@ -18,11 +21,11 @@ export const signup = async(req, res) => {
             return res.status(400).json({success: false, message: "user already exists"});
         }
 
-        const hashedPassword = await bcryptjs.hash(password, 10);
+        
         const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
         const user = new User({
           email,
-          password: hashedPassword,
+          password,
           name,
           verificationToken,
           verificationTokenExpiresAt: new Date(
@@ -31,15 +34,35 @@ export const signup = async(req, res) => {
         });
 
         await user.save();
-        generateTokenAndSetCookie(user._id, res);
+  
+        
+
+      
+        const refreshToken = generateRefreshTokenAndSetCookie(user._id, res);
+
+        const refSessionToken = await RefreshToken.create({
+            user: user._id,
+            token: refreshToken,
+
+            device: {
+                deviceId: deviceId || "unknown",
+                userAgent: req.headers["user-agent"] || "unknown",
+            },
+        })
+
+        const accessToken = generateAccessTokenAndSetCookie(user._id, res);
+       
         await sendVerificationEmail(user.email, verificationToken);
 
         res.status(200).json({success: true, 
-            message: "user created successfully",
             user: {
                 ...user._doc,
                 password: undefined,
-            }
+            },
+            refreshToken,
+            accessToken,
+            refSessionToken
+        
         });
 
     } catch (error) {
@@ -74,8 +97,9 @@ export const verifyEmail = async(req, res) => {
                 ...user._doc,
                 password: undefined,
             },
-        });
-    } catch (error) {
+        })
+    }
+     catch (error) {
         console.log(error.message);
         throw new Error(error.message);
     }

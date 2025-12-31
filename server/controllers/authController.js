@@ -3,10 +3,13 @@ import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 
 import { User } from "../models/User.js";
+
 import {generateAccessTokenAndSetCookie, generateRefreshTokenAndSetCookie} from "../utils/generateTokenAndSetCookie.js"
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mailtrap/emails.js";
 import { RefreshToken } from "../models/RefreshToken.js";
 import { loginSchema, signupSchema } from "../validators/authValidator.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken"
 
 
 
@@ -70,8 +73,8 @@ export const signup = async(req, res) => {
         if(error.name === "ZodError") {
             return res.status(400).json({
                 success: false,
-                errors: error.errors.map((err) => ({
-                    field: err.path[0],
+                errors: error.issues.map((err) => ({
+                    field: err.path?.[0] || "unknown",
                     message: err.message,
                 })),
             });

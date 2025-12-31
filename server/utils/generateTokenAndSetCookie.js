@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { RefreshToken } from "../models/RefreshToken.js";
+
 
 
 export const generateAccessTokenAndSetCookie = (userId, res) => {

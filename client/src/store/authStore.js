@@ -1,8 +1,8 @@
 import {create} from "zustand";
-import axios from "axios";
+import api from "../utils/axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
-axios.defaults.withCredentials= true;
+api.defaults.withCredentials= true;
 
 export const useAuthStore = create((set) => ({
     user: null,
@@ -14,7 +14,7 @@ export const useAuthStore = create((set) => ({
     signup: async(email, password, name) => {
         set({isLoading: true, error: null});
         try {
-            const response = await axios.post(`${API_URL}/signup`, {email, password, name});
+            const response = await api.post(`/auth/signup`, {email, password, name});
             set({user: response.data.user, isAuthenticated: true, isLoading: false})
         } catch (error) {
             set({error: error.response.data.message || "error signing up", isLoading: false});
@@ -25,7 +25,7 @@ export const useAuthStore = create((set) => ({
     verifyEmail: async(code) => {
        set({isLoading: true, error: null});
        try {
-            const response = await axios.post(`${API_URL}/verify-email`, {code});
+           const response = await api.post(`/auth/verify-email`, {code});
             set({user: response.data.user, isAuthenticated: true, isLoading: false});
        } catch (error) {
             set({error: error.response.data.message || "error verifying email", isLoading: false});
@@ -37,7 +37,7 @@ export const useAuthStore = create((set) => ({
         await new Promise((resolve) => setTimeout(resolve, 2000));
         set({isCheckingAuth: true, error: null});
         try {
-            const response = await axios.get(`${API_URL}/check-auth`);
+            const response = await api.get(`/auth/check-auth`);
             set({user: response.data.user, isCheckingAuth: false, isAuthenticated: true})
         } catch (error) {
             set({
@@ -52,7 +52,7 @@ export const useAuthStore = create((set) => ({
       
         set({isLoading: true, error: null});
         try {
-            const response = await axios.post(`${API_URL}/login`, {email, password});
+            const response = await api.post(`/auth/login`, {email, password});
             set({
                 isAuthenticated: true,
                 user: response.data.user,
@@ -68,7 +68,7 @@ export const useAuthStore = create((set) => ({
     logout: async() => {
         set({ isLoading: true, error: null});
         try {
-            const response = axios.post(`${API_URL}/logout` );
+            const response = api.post(`/auth/logout` );
             set({user: null, error: null, isAuthenticated: false, isLoading: false});
         } catch (error) {
             set({error: "Error logging out", isLoading: false});
@@ -79,7 +79,7 @@ export const useAuthStore = create((set) => ({
     forgotPassword: async (email) => {
         set({isLoading: true, error: null, message: null});
         try {
-            const response = await axios.post(`${API_URL}/forgot-password`, {email});
+            const response = await api.post(`/auth/forgot-password`, {email});
             set({message: response.data.message, isLoading: false});
         } catch (error) {
             set({error: error.response.data.message || "error sending reset password email"});
@@ -87,16 +87,17 @@ export const useAuthStore = create((set) => ({
         }
     },
 
-    resetPassword: async(isCSSVariableToken, password) => {
+    resetPassword: async(token, password) => {
         set({isLoading: true, error: null});
         try {
-            const response = await axios.post(`${API_URL}/reset-password/${token}`, {password});
+            const response = await api.post(`/auth/reset-password/${token}`, {password});
             set({message: response.data.message, isLoading: false});
         } catch (error) {
             set({isLoading: false, error: error.response.data.message || "error resetting password"});
             throw error;
         }
-    }
+    },
+
 
 
 }));

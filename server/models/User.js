@@ -5,16 +5,35 @@ const userSchema = mongoose.Schema(
   {
     email: {
       type: String,
-      unique: true,
       required: true,
+      unique: true,
+      lowercase: true,
+      minlength: 6,
+      maxlength: 50,
+      trim: true,
+      match: [
+        /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9.@]+$/,
+        "Email must contain letters, numbers and only '.' or '@' as special characters",
+      ],
     },
+
     password: {
       type: String,
       required: true,
+      minlength: 6,
+      maxlength: 64,
     },
+
     name: {
       type: String,
       required: true,
+      minlength: 3,
+      maxlength: 30,
+      trim: true,
+      match: [
+        /^[A-Za-z_]+$/,
+        "Name can contain only letters and underscores (_)",
+      ],
     },
     lastLogin: {
       type: Date,

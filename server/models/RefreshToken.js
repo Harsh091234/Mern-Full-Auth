@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
 const refreshTokenSchema = new mongoose.Schema(
@@ -16,8 +17,7 @@ const refreshTokenSchema = new mongoose.Schema(
            
         },
 
-      
-
+     
        device: {
         deviceId: String,
         userAgent: String,
@@ -25,6 +25,19 @@ const refreshTokenSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+refreshTokenSchema.pre("save", async function (next) {
+ 
+    if (!this.isModified("token")) return next();
+
+    try {
+       
+        this.token = await bcrypt.hash(this.token, 10);
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 refreshTokenSchema.index({
     createdAt: 1 

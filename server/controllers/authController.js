@@ -6,15 +6,17 @@ import { User } from "../models/User.js";
 import {generateAccessTokenAndSetCookie, generateRefreshTokenAndSetCookie} from "../utils/generateTokenAndSetCookie.js"
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mailtrap/emails.js";
 import { RefreshToken } from "../models/RefreshToken.js";
+import { loginSchema, signupSchema } from "../validators/authValidator.js";
 
 
 
 export const signup = async(req, res) => {
-    const {name, email, password, deviceId} = req.body;
+
+  
     try {
-        if(!name || !password || !email) {
-            throw new Error("all fields are required");
-        }
+        const validatedData = signupSchema.parse(req.body);
+
+        const { name, email, password, deviceId } = validatedData;
 
         const userAlreadyExists = await User.findOne({email});
         if(userAlreadyExists) {
@@ -40,6 +42,7 @@ export const signup = async(req, res) => {
       
         const refreshToken = generateRefreshTokenAndSetCookie(user._id, res);
 
+
         const refSessionToken = await RefreshToken.create({
             user: user._id,
             token: refreshToken,
@@ -54,18 +57,25 @@ export const signup = async(req, res) => {
        
         await sendVerificationEmail(user.email, verificationToken);
 
-        res.status(200).json({success: true, 
+        res.status(201).json({success: true, 
             user: {
                 ...user._doc,
                 password: undefined,
             },
-            refreshToken,
-            accessToken,
-            refSessionToken
+           
         
         });
 
     } catch (error) {
+        if(error.name === "ZodError") {
+            return res.status(400).json({
+                success: false,
+                errors: error.errors.map((err) => ({
+                    field: err.path[0],
+                    message: err.message,
+                })),
+            });
+        }
         return res.status(400).json({success: false, message: error.message});
     }
 }
@@ -107,35 +117,72 @@ export const verifyEmail = async(req, res) => {
 }
 
 export  const login = async(req, res) => {
-    const {email, password} = req.body;
-    console.log(email, password)
+    const validatedData = loginSchema.parse(req.body);
+    const {email, password, deviceId} = validatedData;
+   
     try {
         const user = await User.findOne({email});
+    
         if(!user) {
             return res.status(400).json({success: false, message: "invalid credentials"});
         }
-
+        console.log("hi")
         const isPasswordValid = await bcryptjs.compare(password, user.password);
+        console.log("pass:", isPasswordValid)
         if(!isPasswordValid) {
             return res.status(400).json({success: false, message: "invalid credentials"});
         }
 
-        generateTokenAndSetCookie( user._id, res);
+        const refreshToken = generateRefreshTokenAndSetCookie(user._id, res);
+
+
+        const refSessionToken = await RefreshToken.create({
+            user: user._id,
+            token: refreshToken,
+
+            device: {
+                deviceId: deviceId || "unknown",
+                userAgent: req.headers["user-agent"] || "unknown",
+            },
+        })
+
+        const accessToken = generateAccessTokenAndSetCookie(user._id, res);
+
         user.lastLogin = new Date();
         await user.save();
 
-        res.status(200).json({success: true, message: "logged in successfully", user: {
+        res.status(200).json({success: true, 
+            user: {
             ...user._doc,
             password: undefined,
         }})
+
+
     } catch (error) {
-        console.log("error: " ,error);
+        if (error.name === "ZodError") {
+            return res.status(400).json({
+                success: false,
+                errors: error.errors.map((err) => ({
+                    field: err.path[0],
+                    message: err.message,
+                })),
+            });
+        }
+        
         res.status(400).json({success: false, message: error.message});
     }
 }
 
 export  const logout = async(req, res) => {
-    res.clearCookie("token");
+    //delete session token
+    const refreshToken = await RefreshToken.findOne({user: req.user._id});
+    if(!refreshToken) return res.status(400).json({message: "No refresh token found for this user"})
+    await refreshToken.deleteOne();
+
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+    
+
     res.status(200).json({success: true, message: "logout successful"})
 }
 
@@ -200,7 +247,8 @@ export const resetPassword = async(req, res) => {
 
 export const checkAuth = async(req, res) => {
     try {
-        const user = await User.findById(req.userId).select("-password");
+        
+        const user = await User.findById(req.user._id).select("-password");
         if(!user) {
             return res.status(400).json({success: false, message: "user not found"});
         }

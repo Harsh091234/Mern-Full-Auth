@@ -7,9 +7,10 @@ import { User } from "../models/User.js";
 import {generateAccessTokenAndSetCookie, generateRefreshTokenAndSetCookie} from "../utils/generateTokenAndSetCookie.js"
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mailtrap/emails.js";
 import { RefreshToken } from "../models/RefreshToken.js";
-import { loginSchema, signupSchema } from "../validators/authValidator.js";
+import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema, verifyEmailSchema } from "../validators/authValidator.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken"
+import { ZodError } from "zod";
 
 
 
@@ -70,11 +71,11 @@ export const signup = async(req, res) => {
         });
 
     } catch (error) {
-        if(error.name === "ZodError") {
+        if (error instanceof ZodError) {
             return res.status(400).json({
                 success: false,
                 errors: error.issues.map((err) => ({
-                    field: err.path?.[0] || "unknown",
+                    field: err.path[0],
                     message: err.message,
                 })),
             });
@@ -84,9 +85,12 @@ export const signup = async(req, res) => {
 }
 
 export const verifyEmail = async(req, res) => {
-    const {code} = req.body;
-    console.log("code",code);
+    
+   
+ 
     try {
+        const validatedData = verifyEmailSchema.parse(req.body);
+        const { code } = validatedData;
         const user = await User.findOne({
           verificationToken: code,
           verificationTokenExpiresAt: { $gt: Date.now() },
@@ -112,18 +116,30 @@ export const verifyEmail = async(req, res) => {
             },
         })
     }
-     catch (error) {
-        console.log(error.message);
-        throw new Error(error.message);
+    catch (error) {
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                success: false,
+                errors: error.issues.map((err) => ({
+                    field: err.path[0],
+                    message: err.message,
+                })),
+            });
+        }
+
+        console.error(error);
+        res.status(400).json({ success: false, message: error.message });
+    }
     }
 
-}
+
 
 export  const login = async(req, res) => {
-    const validatedData = loginSchema.parse(req.body);
-    const {email, password, deviceId} = validatedData;
+  
    
     try {
+        const validatedData = loginSchema.parse(req.body);
+        const { email, password, deviceId } = validatedData;
         const user = await User.findOne({email});
     
         if(!user) {
@@ -162,16 +178,15 @@ export  const login = async(req, res) => {
 
 
     } catch (error) {
-        if (error.name === "ZodError") {
+        if (error instanceof ZodError) {
             return res.status(400).json({
                 success: false,
-                errors: error.errors.map((err) => ({
+                errors: error.issues.map((err) => ({
                     field: err.path[0],
                     message: err.message,
                 })),
             });
         }
-        
         res.status(400).json({success: false, message: error.message});
     }
 }
@@ -190,9 +205,10 @@ export  const logout = async(req, res) => {
 }
 
 export const forgotPassword = async(req, res) => {
-    const {email} = req.body;
     
     try {
+        const validatedData = forgotPasswordSchema.parse(req.body);
+        const {email} = validatedData;
         const user = await User.findOne({email});
         
         if(!user){
@@ -213,6 +229,15 @@ export const forgotPassword = async(req, res) => {
         res.status(200).json({success: true, message: "password reset link sent to your email"});
     } catch (error) {
         console.log("Error in forgot password: ", error);
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                success: false,
+                errors: error.issues.map((err) => ({
+                    field: err.path[0],
+                    message: err.message,
+                })),
+            });
+        }
         res.status(400).json({sucess: false, message: error.message});
     }
 }
@@ -220,7 +245,8 @@ export const forgotPassword = async(req, res) => {
 export const resetPassword = async(req, res) => {
     try {
         const {token} = req.params;
-        const {password} = req.body;
+        const validatedData = resetPasswordSchema.parse(req.body);
+        const {password} = validatedData;
 
         const user = await User.findOne({
             resetPasswordToken: token,
@@ -232,11 +258,11 @@ export const resetPassword = async(req, res) => {
             return res.status(400).json({success: false, message: "invalid or expired reset token"});
         }
 
-        const hashedPassword = await bcryptjs.hash(password, 10);
+       
 
-        user.password = hashedPassword;
+      user.password = password;
         user.resetPasswordToken = undefined;
-        user.resetPasswordExpiresAt = undefined;
+        user.resetPasswordTokenExpiresAt = undefined;
         await user.save();
 
         await sendResetSuccessEmail(user.email);
@@ -244,6 +270,15 @@ export const resetPassword = async(req, res) => {
         res.status(200).json({success: true, message: "password reset successful"});
     } catch (error) {
         console.log("error in reset password", error);
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                success: false,
+                errors: error.issues.map((err) => ({
+                    field: err.path[0],
+                    message: err.message,
+                })),
+            });
+        }
         res.status(400).json({success: false, message: error.message});
     }
 }

@@ -1,0 +1,23 @@
+{
+  "name": "mern-auth",
+  "version": "1.0.0",
+  "description": "A complete **Authentication System** built with the **MERN Stack (MongoDB, Express.js, React.js, Node.js)**. Includes secure user login, signup, logout, forgot password, and reset password functionalities.",
+  "main": "index.js",
+  "scripts": {
+ 
+    "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
+    "start": "npm run start --prefix server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Harsh091234/Mern-Full-Auth.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Harsh091234/Mern-Full-Auth/issues"
+  },
+  "homepage": "https://github.com/Harsh091234/Mern-Full-Auth#readme"
+}
